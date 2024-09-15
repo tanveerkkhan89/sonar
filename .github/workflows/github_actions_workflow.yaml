@@ -1,21 +1,43 @@
 name: "sonar_cloud_scan_github_actions"
 on:
-  workflow_dispatch:
-
+  push:
+    branches:
+      - main
+           
 jobs:
-  DemoSonarCloudSCan:
+  sonarcloud:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
         with:
-            fetch-depth: 0
+          fetch-depth: 0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'adopt'
+
+      - name: Cache Maven packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Build with Maven
+        run: mvn clean verify
+
       - name: SonarCloud Scan
         uses: sonarsource/sonarcloud-github-action@master
+        with:
+          args: >
         env:
             GITHUB_TOKEN: ${{ secrets.GIT_TOKEN }}
             SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
           args: >
               -Dsonar.organization=tanveerkhan
-              -Dsonar.projectKey=tanveerkhan
-              
+              -Dsonar.projectKey=tanveerkhan      
